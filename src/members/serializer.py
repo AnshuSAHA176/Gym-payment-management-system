@@ -9,6 +9,8 @@ class MemberSerializer(serializers.ModelSerializer):
 
         fields = '__all__'
 
+
+
 class MemberDashboardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Member

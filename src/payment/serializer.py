@@ -4,6 +4,11 @@ from django.utils import timezone
 from members.models  import Member
 from datetime import timedelta
 from django.db import transaction
+
+import calendar
+
+
+
 class PaymentSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source='member.name',read_only=True)
     class Meta:
@@ -61,9 +66,9 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
 
         # Calculate next due date
         if member.payment_due_date == None:
-            member.payment_due_date = payment.payment_date + timedelta(days=30)
+            member.payment_due_date = add_one_month(member.payment_due_datepayment_due_date)
 
-        member.payment_due_date = member.payment_due_date + timedelta(days=30)
+        member.payment_due_date = add_one_month(member.payment_due_datepayment_due_date)
             
 
         # Save updated due date
@@ -79,3 +84,22 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
 
 
 
+def add_one_month(date):
+
+
+    year = date.year
+    month = date.month + 1
+
+    if month > 12:
+        month = 1
+        year += 1
+
+    last_day = calendar.monthrange(year, month)[1]
+
+    day = min(date.day, last_day)
+
+    return date.replace(
+        year=year,
+        month=month,
+        day=day,
+    )
