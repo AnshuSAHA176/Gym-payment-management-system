@@ -1,24 +1,25 @@
 from rest_framework import serializers
 from .models import Payment
 from django.utils import timezone
-from members.models  import Member
-from datetime import timedelta
 from django.db import transaction
-
 import calendar
 
 
-
 class PaymentSerializer(serializers.ModelSerializer):
-    name = serializers.CharField(source='member.name',read_only=True)
+    name = serializers.CharField(
+        source="member.name",
+        read_only=True
+    )
+
     class Meta:
         model = Payment
-        fields =[
-            'name',
-            'amount',
-            'status',
-            'payment_date'
+        fields = [
+            "name",
+            "amount",
+            "status",
+            "payment_date",
         ]
+
 
 class PaymentCreateSerializer(serializers.ModelSerializer):
     name = serializers.CharField(
@@ -48,44 +49,47 @@ class PaymentCreateSerializer(serializers.ModelSerializer):
     @transaction.atomic
     def create(self, validated_data):
 
-        # Get the member from the incoming data
+        # Get member
         member = validated_data["member"]
 
-        # Amount comes from the member's monthly fee
+        # Amount comes from member's monthly fee
         validated_data["amount"] = member.monthly_fee
 
-        # Payment is automatically marked as PAID
+        # Automatically mark payment as PAID
         validated_data["status"] = "PAID"
 
-        # Payment date is automatically today's date
+        # Payment date = today
         payment_date = timezone.localdate()
         validated_data["payment_date"] = payment_date
 
         # Create payment
-        payment = Payment.objects.create(**validated_data)
+        payment = Payment.objects.create(
+            **validated_data
+        )
 
         # Calculate next due date
-        if member.payment_due_date == None:
-            member.payment_due_date = add_one_month(member.payment_due_datepayment_due_date)
-
-        member.payment_due_date = add_one_month(member.payment_due_datepayment_due_date)
-            
+        if member.payment_due_date is None:
+            # If there is no existing due date,
+            # next payment is one month from today.
+            member.payment_due_date = add_one_month(
+                payment_date
+            )
+        else:
+            # Normally move the existing due date
+            # forward by one calendar month.
+            member.payment_due_date = add_one_month(
+                member.payment_due_date
+            )
 
         # Save updated due date
-        member.save(update_fields=["payment_due_date"])
+        member.save(
+            update_fields=["payment_due_date"]
+        )
 
         return payment
 
 
-
-
-
-
-
-
-
 def add_one_month(date):
-
 
     year = date.year
     month = date.month + 1
@@ -94,12 +98,22 @@ def add_one_month(date):
         month = 1
         year += 1
 
-    last_day = calendar.monthrange(year, month)[1]
+    # Number of days in the target month
+    last_day = calendar.monthrange(
+        year,
+        month
+    )[1]
 
-    day = min(date.day, last_day)
+    # Keep the same day when possible.
+    # Example: 18 -> 18
+    # Example: 31 -> 30/29/28 when necessary.
+    day = min(
+        date.day,
+        last_day
+    )
 
     return date.replace(
         year=year,
         month=month,
-        day=day,
+        day=day
     )
