@@ -16,8 +16,7 @@ from datetime import timedelta
 from payment.serializer import PaymentSerializer
 from members.serializer import MemberDashboardSerializer
 from django.utils.decorators import method_decorator
-from django.views.decorators.cache import cache_page
-
+from django.core.cache import cache
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = RegisterSerializer
@@ -50,9 +49,13 @@ class LoginView(APIView):
 
 class DashboardView(APIView):
     permission_classes = [IsAdminUser]
-    @method_decorator(cache_page(60 * 60 * 2,key_prefix='dashboard'))
+    
     def get(self, request):
+        cached_data = cache.get("dashboard")
 
+        if cached_data is not None:
+            return Response(cached_data)
+        
         today = timezone.localdate()
 
         summary = Member.objects.aggregate(
@@ -108,8 +111,7 @@ class DashboardView(APIView):
         due_today_members = Member.objects.filter(
             payment_due_date=today
         )[:4]
-
-        return Response({
+        data = {
             "summary": summary,
 
             "monthly_collection": monthly_collection["total"] or 0,
@@ -128,7 +130,10 @@ class DashboardView(APIView):
                 due_today_members,
                 many=True
             ).data,
-        })
+        }
+
+        cache.set(key='dashboard',value=data,timeout=60*60)
+        return Response(data)
 
 
 from django.http import JsonResponse
