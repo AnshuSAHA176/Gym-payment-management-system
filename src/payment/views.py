@@ -7,6 +7,15 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 from .filters import PaymentFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+
+class PaymentPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 50
+
+
+
 
 @method_decorator(
     cache_page(60 * 5, key_prefix='payment_list'),
@@ -18,7 +27,7 @@ class PaymentView(generics.ListCreateAPIView):
     queryset = Payment.objects.select_related('member')
     backend_filters = [DjangoFilterBackend]
     filterset_class = PaymentFilter
-    
+    pagination_class =PaymentPagination
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return PaymentCreateSerializer
