@@ -110,7 +110,7 @@ class DashboardView(APIView):
         )[:4]
 
         return Response({
-            "summery": summary,
+            "summary": summary,
 
             "monthly_collection": monthly_collection["total"] or 0,
 

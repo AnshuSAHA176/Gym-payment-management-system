@@ -11,22 +11,24 @@ class PaymentSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-
-
-
-
-
+    member_id = serializers.UUIDField(
+        source="member.member_id",
+        read_only=True
+    )
 
     class Meta:
         model = Payment
+
         fields = [
-            'id',
+            "id",
+            "member_id",
             "name",
             "amount",
             "status",
-            'payment_method',
+            "payment_method",
             "payment_date",
-            'created_at'
+            "due_date",
+            "created_at",
         ]
 
 

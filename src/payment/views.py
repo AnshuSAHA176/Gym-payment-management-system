@@ -8,7 +8,7 @@ from django.views.decorators.cache import cache_page
 from .filters import PaymentFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
-
+from rest_framework import filters
 class PaymentPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
@@ -22,16 +22,30 @@ class PaymentPagination(PageNumberPagination):
     name='get'
 )
 class PaymentView(generics.ListCreateAPIView):
-    permission_classes=[IsAdminUser]
+    permission_classes = [IsAdminUser]
 
-    queryset = Payment.objects.select_related('member')
-    backend_filters = [DjangoFilterBackend]
+    queryset = Payment.objects.select_related("member")
+
+    filter_backends = [
+        filters.SearchFilter,
+        DjangoFilterBackend,
+    ]
+
+    search_fields = [
+        "member__name",
+        "member__phone",
+        "member__member_id",
+    ]
+
     filterset_class = PaymentFilter
-    pagination_class =PaymentPagination
+
+    pagination_class = PaymentPagination
+
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return PaymentCreateSerializer
-        else: return PaymentSerializer
+
+        return PaymentSerializer
 
 @method_decorator(
     cache_page(60 * 5, key_prefix='payment_detail'),
