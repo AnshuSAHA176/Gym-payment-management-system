@@ -43,7 +43,14 @@ class PaymentView(generics.ListCreateAPIView):
         return PaymentSerializer
 
     def list(self, request, *args, **kwargs):
-        cache_key = "payment_list"
+        query_string = request.META.get("QUERY_STRING", "")
+
+        version = cache.get(
+            "payment_cache_version",
+            1,
+        )
+
+        cache_key = f"payment_list_{version}_{query_string}"
 
         cached_data = cache.get(cache_key)
 
@@ -75,7 +82,13 @@ class PaymentCurdView(generics.RetrieveUpdateDestroyAPIView):
 
     def retrieve(self, request, *args, **kwargs):
         payment_id = kwargs.get("pk")
-        cache_key = f"payment_detail_{payment_id}"
+
+        version = cache.get(
+            "payment_cache_version",
+            1,
+        )
+
+        cache_key = f"payment_detail_{version}_{payment_id}"
 
         cached_data = cache.get(cache_key)
 

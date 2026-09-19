@@ -1,11 +1,12 @@
 from rest_framework import viewsets, filters, generics
 from rest_framework.permissions import IsAdminUser
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
 
 from django.core.cache import cache
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.response import Response
+
 from .models import Member
 from .serializer import (
     MemberSerializer,
@@ -40,23 +41,22 @@ class MemeberViewSet(viewsets.ModelViewSet):
     filterset_fields = ["is_active"]
 
     def list(self, request, *args, **kwargs):
-        """
-        Return cached member list when available.
-        """
-
-        # Create a unique cache key based on query parameters
         query_string = request.META.get("QUERY_STRING", "")
-        cache_key = f"member_list"
+
+        version = cache.get(
+            "member_cache_version",
+            1,
+        )
+
+        cache_key = f"member_list_{version}_{query_string}"
 
         cached_data = cache.get(cache_key)
 
         if cached_data is not None:
             return Response(cached_data)
 
-        # Generate normal DRF response
         response = super().list(request, *args, **kwargs)
 
-        # Cache only successful responses
         if response.status_code == 200:
             cache.set(
                 cache_key,
@@ -85,12 +85,14 @@ class OverDeuMembers(generics.ListAPIView):
         )
 
     def list(self, request, *args, **kwargs):
-        """
-        Return cached overdue-member list when available.
-        """
-
         query_string = request.META.get("QUERY_STRING", "")
-        cache_key = f"overdue_members"
+
+        version = cache.get(
+            "member_cache_version",
+            1,
+        )
+
+        cache_key = f"overdue_members_{version}_{query_string}"
 
         cached_data = cache.get(cache_key)
 
