@@ -62,6 +62,20 @@ class Payment(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
-
+    class Meta:
+        indexes = [
+            models.Index(
+                fields=["member", "payment_date"],
+                name="payment_member_date_idx"
+            ),
+            models.Index(
+                fields=["payment_date"],
+                name="payment_date_idx"
+            ),
+            models.Index(
+                fields=["status"],
+                name="payment_status_idx"
+            ),
+        ]
     def __str__(self):
         return f"{self.member.name} - {self.amount} - {self.status}"

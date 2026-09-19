@@ -11,13 +11,22 @@ class PaymentSerializer(serializers.ModelSerializer):
         read_only=True
     )
 
+
+
+
+
+
+
     class Meta:
         model = Payment
         fields = [
+            'id',
             "name",
             "amount",
             "status",
+            'payment_method',
             "payment_date",
+            'created_at'
         ]
 
 

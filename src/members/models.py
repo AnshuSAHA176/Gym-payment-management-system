@@ -38,5 +38,13 @@ class Member(models.Model):
         auto_now=True
     )
 
+
+class Meta:
+    indexes = [
+        models.Index(fields=['name'], name='member_name_idx'),
+        models.Index(fields=['is_active'], name='member_active_idx'),
+        models.Index(fields=['payment_due_date'], name='member_due_idx'),
+    ]
     def __str__(self):
         return self.name
+    

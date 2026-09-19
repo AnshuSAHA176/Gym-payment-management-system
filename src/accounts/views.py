@@ -15,7 +15,8 @@ from django.utils import timezone
 from datetime import timedelta
 from payment.serializer import PaymentSerializer
 from members.serializer import MemberDashboardSerializer
-
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -49,8 +50,9 @@ class LoginView(APIView):
 
 class DashboardView(APIView):
     permission_classes = [IsAdminUser]
-
+    @method_decorator(cache_page(60 * 60 * 2,key_prefix='dashboard'))
     def get(self, request):
+
         today = timezone.localdate()
 
         summary = Member.objects.aggregate(
@@ -101,11 +103,11 @@ class DashboardView(APIView):
             payment_due_date__lt=today
         ).order_by(
             "payment_due_date"
-        )
+        )[:4]
 
         due_today_members = Member.objects.filter(
             payment_due_date=today
-        )
+        )[:4]
 
         return Response({
             "summery": summary,
