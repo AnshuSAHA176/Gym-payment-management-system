@@ -9,7 +9,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from .models import Payment
 from .serializer import PaymentSerializer, PaymentCreateSerializer
 from .filters import PaymentFilter
-
+import calendar
 
 class PaymentPagination(PageNumberPagination):
     page_size = 20
@@ -105,3 +105,55 @@ class PaymentCurdView(generics.RetrieveUpdateDestroyAPIView):
             )
 
         return response
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        member = instance.member
+
+        if member.payment_due_date:
+            member.payment_due_date = previous_month(
+                member.payment_due_date
+            )
+            member.save(update_fields=["payment_due_date"])
+
+        instance.delete()
+
+        return Response(status=204)
+
+
+        
+
+
+
+def previous_month(date):
+
+    year = date.year
+    if date.month == 1:
+        month = 12
+    else:
+            month = date.month - 1
+
+    if month == 12:
+        
+        year -= 1
+    print(month)
+    print(year)
+
+    last_day = calendar.monthrange(
+        year,
+        month
+    )[1]
+    print(last_day)
+
+   
+    day = min(
+        date.day,
+        last_day
+    )
+    print(day)
+
+    return date.replace(
+        year=year,
+        month=month,
+        day=day
+    )
