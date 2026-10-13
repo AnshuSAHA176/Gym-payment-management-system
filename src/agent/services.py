@@ -10,9 +10,32 @@ class Services():
             "Authorization": f"Bearer {self.access_token}",
             "Content-Type": "application/json",
         }
-    def get_monthly_collection(self):
-        response = requests.get(url=f'{self.base_url}payment/summary/',headers=self._headers())
+    
+
+    def get_monthly_collection(
+        self,
+        start_date: str,
+        end_date: str,
+    ):
+       
+        response = requests.get(
+            f"{self.base_url}payment/summary/",
+            headers=self._headers(),
+            params={
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+            timeout=10,
+        )
         response.raise_for_status()
-        return response
+        return response.json()
+    def get_overdue_members(
+            self,
+            name = None ,
+            phone = None,
+            member_id = None,
+    ):
+        response = requests.get(f'{self.base_url}')
         
-        
+
+                

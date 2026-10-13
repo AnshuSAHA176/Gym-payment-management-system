@@ -62,6 +62,7 @@ INSTALLED_APPS = [
     "accounts",
     "members",
     "payment",
+    'agent',
 ]
 
 
