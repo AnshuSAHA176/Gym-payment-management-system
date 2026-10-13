@@ -71,3 +71,20 @@ class Services:
         )
         responces.raise_for_status()
         return responces.json()
+    def get_member_payment_history(self, name=None, phone=None, member_id=None):
+
+        params = {}
+
+        if name:
+            params["name"] = name
+
+        if phone:
+            params["phone"] = phone
+
+        if member_id:
+            params["member_id"] = member_id
+        responces = requests.get(
+            url=f"{self.base_url}payment/", headers=self._headers(), params=params
+        )
+        responces.raise_for_status()
+        return responces.json()
