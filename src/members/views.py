@@ -67,6 +67,8 @@ class MemeberViewSet(viewsets.ModelViewSet):
         return response
 
 
+
+# filter have to fix in_acive
 class OverDeuMembers(generics.ListAPIView):
     serializer_class = OverDueSerializer
     permission_classes = [IsAdminUser]
