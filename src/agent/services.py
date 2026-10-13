@@ -48,9 +48,26 @@ class Services:
         if member_id:
             params["member_id"] = member_id
 
-        
         response = requests.get(
             f"{self.base_url}members/overdue/", headers=self._headers(), params=params
         )
         response.raise_for_status()
         return response.json()
+
+    def search_members(self, name=None, phone=None, member_id=None):
+
+        params = {}
+
+        if name:
+            params["name"] = name
+
+        if phone:
+            params["phone"] = phone
+
+        if member_id:
+            params["member_id"] = member_id
+        responces = requests.get(
+            url=f"{self.base_url}members/", headers=self._headers(), params=params
+        )
+        responces.raise_for_status()
+        return responces.json()

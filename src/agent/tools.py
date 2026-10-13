@@ -69,5 +69,44 @@ def Tools(access_token):
             name=name, phone=phone, member_id=member_id
         )
         return json.dumps(response)
+   
+    @tool
+    def search_members(
+        name: Optional[str] = None,
+        phone: Optional[str] = None,
+        member_id: Optional[str] = None,
+    ):
+        """
+        Search for gym members using their name, phone number, or member ID.
 
-    return [get_monthly_collection, get_overdue_members]
+        Use this tool when the gym owner wants to:
+        - Find a member by name.
+        - Look up a member using their phone number.
+        - Retrieve a member's details using their unique member ID.
+        - Identify a member before checking their payment history
+        or membership status.
+
+        Args:
+            name: Optional member name to search for.
+            phone: Optional phone number to search for.
+            member_id: Optional unique identifier of the member.
+
+        Returns:
+            str: JSON-formatted member data returned by the Django backend.
+
+        Notes:
+            - All arguments are optional.
+            - Provide the available identifying information to narrow
+            the search results.
+            - If no arguments are provided, the backend determines
+            which members are returned.
+            - This tool is read-only and does not modify member records.
+        """
+        response = services.search_members(
+            name=name,
+            phone=phone,
+            member_id=member_id,
+        )
+        return json.dumps(response)
+
+    return [get_monthly_collection, get_overdue_members,search_members]
