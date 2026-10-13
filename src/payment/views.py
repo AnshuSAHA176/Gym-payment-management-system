@@ -10,6 +10,9 @@ from .models import Payment
 from .serializer import PaymentSerializer, PaymentCreateSerializer
 from .filters import PaymentFilter
 import calendar
+from rest_framework.views import APIView
+from django.db.models import Count,Sum,Q
+from rest_framework import status
 
 class PaymentPagination(PageNumberPagination):
     page_size = 20
@@ -157,3 +160,33 @@ def previous_month(date):
         month=month,
         day=day
     )
+
+
+
+
+
+class SummaryPaymentView(APIView):
+    permission_classes= [IsAdminUser]
+    filterset_class = PaymentFilter
+    def get(self,request):
+        query_set = Payment.objects.all()
+        filterset = self.filterset_class(
+            request.query_params,
+            queryset=query_set,
+            request=request
+        )
+        if not filterset.is_valid():
+            return Response(
+                {
+                    "please enter valid filter",
+                
+                },status=status.HTTP_400_BAD_REQUEST
+            )
+        query_set = filterset.qs
+        return Response(query_set.aggregate(
+            sum_payment= Sum('amount'),
+            total_payment=Count('id',filter=Q(status='PAID'))
+
+        ))
+
+    

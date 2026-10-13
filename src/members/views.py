@@ -22,7 +22,7 @@ class MemberPagination(PageNumberPagination):
 
 
 class MemeberViewSet(viewsets.ModelViewSet):
-    queryset = Member.objects.all().order_by("name")
+    queryset = Member.objects.prefetch_related('payments').order_by("name")
     serializer_class = MemberSerializer
     permission_classes = [IsAdminUser]
 
