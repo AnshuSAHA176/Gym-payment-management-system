@@ -3,7 +3,7 @@ import requests
 
 class Services:
     def __init__(self, base_url, access_token):
-        self.base_url = base_url
+        self.base_url = base_url.rstrip("/") + "/"
         self.access_token = access_token
 
     def _headers(self):
@@ -12,79 +12,70 @@ class Services:
             "Content-Type": "application/json",
         }
 
-    def get_monthly_collection(
-        self,
-        start_date: str,
-        end_date: str,
-    ):
-
+    def _get(self, endpoint, params=None):
         response = requests.get(
-            f"{self.base_url}payment/summary/",
+            f"{self.base_url}{endpoint}",
             headers=self._headers(),
-            params={
-                "start_date": start_date,
-                "end_date": end_date,
-            },
+            params=params or {},
             timeout=10,
         )
         response.raise_for_status()
         return response.json()
 
-    def get_overdue_members(
+    def get_monthly_collection(self, start_date: str, end_date: str):
+        return self._get(
+            "payment/summary/",
+            {
+                "start_date": start_date,
+                "end_date": end_date,
+            },
+        )
+
+    def get_overdue_members(self, name=None, phone=None, member_id=None):
+        params = {
+            key: value
+            for key, value in {
+                "name": name,
+                "phone": phone,
+                "member_id": member_id,
+            }.items()
+            if value
+        }
+        return self._get("members/overdue/", params)
+
+    def search_members(self, name=None, phone=None, member_id=None):
+        params = {
+            key: value
+            for key, value in {
+                "name": name,
+                "phone": phone,
+                "member_id": member_id,
+            }.items()
+            if value
+        }
+        return self._get("members/", params)
+
+    def get_member_payment_history(
         self,
         name=None,
         phone=None,
         member_id=None,
+        start_date=None,
+        end_date=None,
     ):
-
         params = {}
 
-        if name:
-            params["name"] = name
-
-        if phone:
-            params["phone"] = phone
-
         if member_id:
-            params["member_id"] = member_id
+            params["member"] = member_id
+        elif name:
+            params["search"] = name
+        elif phone:
+            params["search"] = phone
 
-        response = requests.get(
-            f"{self.base_url}members/overdue/", headers=self._headers(), params=params
-        )
-        response.raise_for_status()
-        return response.json()
+        if start_date:
+            params["start_date"] = start_date
 
-    def search_members(self, name=None, phone=None, member_id=None):
+        if end_date:
+            params["end_date"] = end_date
 
-        params = {}
-
-        if name:
-            params["name"] = name
-
-        if phone:
-            params["phone"] = phone
-
-        if member_id:
-            params["member_id"] = member_id
-        responces = requests.get(
-            url=f"{self.base_url}members/", headers=self._headers(), params=params
-        )
-        responces.raise_for_status()
-        return responces.json()
-    def get_member_payment_history(self, name=None, phone=None, member_id=None):
-
-        params = {}
-
-        if name:
-            params["name"] = name
-
-        if phone:
-            params["phone"] = phone
-
-        if member_id:
-            params["member_id"] = member_id
-        responces = requests.get(
-            url=f"{self.base_url}payment/", headers=self._headers(), params=params
-        )
-        responces.raise_for_status()
-        return responces.json()
+        return self._get("payment/", params)

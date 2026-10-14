@@ -1,37 +1,56 @@
+
 from langchain.tools import tool
 from .services import Services
-import json
 from typing import Optional
+import json
 
 BASE_URL = "http://127.0.0.1:8000/"
 
 
 def Tools(access_token):
+    """
+    Create the tools available to the gym management AI assistant.
 
-    services = Services(base_url=BASE_URL, access_token=access_token)
+    These tools retrieve payment collection statistics, overdue members,
+    member details, and member payment history from the Django backend.
+
+    Args:
+        access_token: JWT access token used to authenticate API requests.
+
+    Returns:
+        list: LangChain tools available to the AI agent.
+    """
+    services = Services(
+        base_url=BASE_URL,
+        access_token=access_token,
+    )
 
     @tool
     def get_monthly_collection(start_date: str, end_date: str):
         """
-        Get gym payment collection statistics for a date range.
+        Retrieve payment collection statistics for a date range.
 
-        Use this tool when the user asks about collection totals
-        for a particular month or period.
-
-        Examples:
-        - September 2026: start_date="2026-09-01",
-        end_date="2026-09-30"
-        - October 2026: start_date="2026-10-01",
-        end_date="2026-10-31"
+        Use this tool when the gym owner asks:
+        - How much money was collected during a period?
+        - What was the collection total for a particular month?
+        - How much was collected between two dates?
 
         Args:
-            start_date: Start date in YYYY-MM-DD format.
-            end_date: End date in YYYY-MM-DD format.
+            start_date: Inclusive start date in YYYY-MM-DD format.
+            end_date: Inclusive end date in YYYY-MM-DD format.
 
         Returns:
-            JSON-formatted collection statistics.
+            JSON-formatted collection statistics from the backend.
+
+        Example:
+            September 2026:
+            start_date="2026-09-01"
+            end_date="2026-09-30"
         """
-        response = services.get_monthly_collection(start_date, end_date)
+        response = services.get_monthly_collection(
+            start_date,
+            end_date,
+        )
         return json.dumps(response)
 
     @tool
@@ -41,32 +60,34 @@ def Tools(access_token):
         member_id: Optional[str] = None,
     ):
         """
-        Retrieve members whose gym membership payments are overdue.
+        Retrieve gym members whose payments are overdue.
 
-        Use this tool when the user asks:
-        - Which members have overdue fees?
-        - Does a specific member have unpaid or overdue payments?
-        - Find overdue members by name, phone number, or member ID.
-        - Check whether a particular member has overdue fees.
+        Use this tool when the gym owner asks:
+        - Who has overdue membership fees?
+        - Which members need to pay their fees?
+        - Does a particular member have overdue payments?
+        - Find overdue members by name, phone, or member ID.
 
         Args:
-            name: Optional member name to search for.
-            phone: Optional phone number to identify or filter members.
-            member_id: Optional unique ID of a specific member.
+            name: Optional member name to filter the results.
+            phone: Optional member phone number.
+            member_id: Optional unique member identifier.
 
         Returns:
-            str: JSON-formatted data containing overdue member records
-            returned by the Django backend.
+            JSON-formatted overdue member records from the backend.
 
         Notes:
-            - All arguments are optional.
-            - Use the available identifying information to narrow the search.
-            - If no arguments are provided, retrieve all overdue members
-              supported by the backend endpoint.
-            - This tool is read-only and does not modify payment records.
+            All arguments are optional. Use the available identifying
+            information to narrow the search. If no filters are provided,
+            the backend determines which overdue members are returned.
+
+            Only report overdue status based on the backend response.
+            This tool does not modify payment records.
         """
         response = services.get_overdue_members(
-            name=name, phone=phone, member_id=member_id
+            name=name,
+            phone=phone,
+            member_id=member_id,
         )
         return json.dumps(response)
 
@@ -77,37 +98,41 @@ def Tools(access_token):
         member_id: Optional[str] = None,
     ):
         """
-        Search for gym members using their name, phone number, or member ID.
+        Search for gym members using their identifying information.
 
-        Use this tool when the gym owner wants to:
+        Use this tool when the gym owner asks:
         - Find a member by name.
-        - Look up a member using their phone number.
-        - Retrieve a member's details using their unique member ID.
-        - Identify a member before checking their payment history
-        or membership status.
+        - Look up a member by phone number.
+        - Find a member using their unique ID.
+        - Retrieve member details before checking payment history.
 
         Args:
             name: Optional member name to search for.
-            phone: Optional phone number to search for.
-            member_id: Optional unique identifier of the member.
+            phone: Optional member phone number.
+            member_id: Optional unique member identifier.
 
         Returns:
-            str: JSON-formatted member data returned by the Django backend.
+            JSON-formatted member data returned by the backend.
 
         Notes:
-            - All arguments are optional.
-            - Provide the available identifying information to narrow
-            the search results.
-            - If no arguments are provided, the backend determines
-            which members are returned.
-            - This tool is read-only and does not modify member records.
+            All arguments are optional. Use the information provided
+            by the owner to narrow the search. If multiple members match,
+            do not assume they are the same person.
+
+            This tool is read-only and does not modify member records.
         """
-        response = services.search_members(
-            name=name,
-            phone=phone,
-            member_id=member_id,
-        )
-        return json.dumps(response)
+        result = services.search_members(
+        name=name,
+        phone=phone,
+        member_id=member_id,
+    )
+
+    # Limit results to 10 members.
+        if isinstance(result, list):
+            result = result[:10]
+
+        return json.dumps(result)
+
 
     @tool
     def get_member_payment_history(
@@ -116,29 +141,25 @@ def Tools(access_token):
         member_id: Optional[str] = None,
     ):
         """
-        Retrieve the payment history of a gym member.
+        Retrieve payment history for a gym member using their name,
+        phone number, or member ID.
 
-        Use this tool when the gym owner asks about:
-        - A member's previous or recent payments.
-        - Whether a specific member has recorded payments.
-        - Payment history for a member identified by name, phone number,
-        or unique member ID.
-        - Payment details associated with a particular member.
+        Use this tool to review previous payments or verify recorded
+        payment transactions.
 
         Args:
-            name: Optional name of the member.
-            phone: Optional phone number of the member.
-            member_id: Optional unique ID of the member.
+            name: Optional member name.
+            phone: Optional member phone number.
+            member_id: Optional unique member identifier.
 
         Returns:
-            str: JSON-formatted payment history returned by the Django API.
+            JSON-formatted payment history from the backend.
 
         Notes:
-            - All arguments are optional.
-            - Use the available identifying information to find the member.
-            - Do not assume a payment was made unless the backend records it.
-            - This tool is read-only and does not create, update, or delete
-            payment records.
+            - Use available identifying information to find the member.
+            - Do not claim a payment was made unless records confirm it.
+            - Empty results do not prove that a member never paid.
+            - This tool is read-only and does not modify payment records.
         """
         response = services.get_member_payment_history(
             name=name,
@@ -146,6 +167,7 @@ def Tools(access_token):
             member_id=member_id,
         )
         return json.dumps(response)
+
 
     return [
         get_monthly_collection,

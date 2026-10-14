@@ -15,10 +15,15 @@ class State(BaseModel):
 def get_agent(access_token):
 
     tools = Tools(access_token=access_token)
+   
+
+    for item in tools:
+        print("Name:", repr(item.name))
+        print("Schema:", item.args_schema.model_json_schema())
     model_with_tool = model.bind_tools(tools=tools)
 
     def agent(state: State):
-        return {"messages": [model_with_tool.invoke([state.messages[-1]])]}
+        return {"messages": [model_with_tool.invoke(state.messages)]}
 
     graph_builder = StateGraph(State)
 
