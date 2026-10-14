@@ -24,7 +24,7 @@ def Tools(access_token):
         list: LangChain tools available to the AI agent.
     """
     services = Services(
-        base_url=BASE_URL,
+        base_url=BACKEND_URL,
         access_token=access_token,
     )
 

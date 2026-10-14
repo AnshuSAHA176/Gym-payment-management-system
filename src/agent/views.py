@@ -29,7 +29,10 @@ Rules:
 class AgentView(APIView):
     permission_classes = [IsAdminUser]
 
+        
     def post(self, request):
+        import time
+
         messages = request.data.get("messages")
 
         if not isinstance(messages, str) or not messages.strip():
@@ -38,29 +41,45 @@ class AgentView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        started = time.perf_counter()
+
         try:
             access_token = self._get_token(request)
             agent = get_agent(access_token=access_token)
 
-            result = agent.invoke({
-                "messages": [
-                    SystemMessage(content=SYSTEM_PROMPT),
-                    HumanMessage(content=messages),
-                ]
-            })
+            logger.info("Gym agent: starting invocation")
+
+            result = agent.invoke(
+                {
+                    "messages": [
+                        SystemMessage(content=SYSTEM_PROMPT),
+                        HumanMessage(content=messages),
+                    ]
+                },
+                config={"recursion_limit": 5},
+            )
+
+            logger.info(
+                "Gym agent: invocation completed in %.2fs",
+                time.perf_counter() - started,
+            )
 
             final_message = result["messages"][-1]
 
             return Response({
-                "response": final_message.content
+                "response": final_message.content,
             })
 
         except Exception:
-            logger.exception("Gym AI assistant failed")
+            logger.exception(
+                "Gym AI assistant failed after %.2fs",
+                time.perf_counter() - started,
+            )
             return Response(
                 {"error": "The AI assistant could not process your request."},
                 status=status.HTTP_502_BAD_GATEWAY,
             )
+
 
     def _get_token(self, request):
         auth_header = request.headers.get("Authorization", "")

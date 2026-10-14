@@ -3,7 +3,7 @@ import requests
 
 class Services:
     def __init__(self, base_url, access_token):
-        self.base_url = base_url.rstrip("/") + "/"
+        self.base_url = base_url
         self.access_token = access_token
 
     def _headers(self):
