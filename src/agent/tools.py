@@ -135,6 +135,7 @@ def Tools(access_token):
 
 
     
+    
     @tool
     def get_member_payment_history(
         name: Optional[str] = None,
@@ -174,8 +175,8 @@ def Tools(access_token):
             start_date=start_date,
             end_date=end_date,
         )
-        return json.dumps(response)
 
+        return json.dumps(response)
 
 
     return [

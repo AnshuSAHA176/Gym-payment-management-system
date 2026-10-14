@@ -43,17 +43,8 @@ class Services:
         }
         return self._get("members/overdue/", params)
 
-    def search_members(self, name=None, phone=None, member_id=None):
-        params = {
-            key: value
-            for key, value in {
-                "name": name,
-                "phone": phone,
-                "member_id": member_id,
-            }.items()
-            if value
-        }
-        return self._get("members/", params)
+   
+   
 
     def get_member_payment_history(
         self,
@@ -63,14 +54,37 @@ class Services:
         start_date=None,
         end_date=None,
     ):
+        from uuid import UUID
+        
         params = {}
 
         if member_id:
-            params["member"] = member_id
+            try:
+                UUID(str(member_id))
+            except (ValueError, TypeError, AttributeError):
+                # The model may have supplied a name instead of a UUID.
+                if not name and not phone:
+                    return {
+                        "results": [],
+                        "message": (
+                            "Invalid member ID. Search by member name "
+                            "or phone number first."
+                        ),
+                    }
+
+                member_id = None
+
+        if member_id:
+            params["member"] = str(member_id)
         elif name:
             params["search"] = name
         elif phone:
             params["search"] = phone
+        else:
+            return {
+                "results": [],
+                "message": "Provide a member name, phone number, or valid member ID.",
+            }
 
         if start_date:
             params["start_date"] = start_date
