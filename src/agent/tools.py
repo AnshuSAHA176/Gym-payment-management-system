@@ -3,8 +3,11 @@ from langchain.tools import tool
 from .services import Services
 from typing import Optional
 import json
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-BASE_URL = "http://127.0.0.1:8000/"
+BACKEND_URL = os.environ.get('BACKEND_URL')
 
 
 def Tools(access_token):

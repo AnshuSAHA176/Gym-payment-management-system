@@ -17,7 +17,7 @@ class Services:
             f"{self.base_url}{endpoint}",
             headers=self._headers(),
             params=params or {},
-            timeout=10,
+            
         )
         response.raise_for_status()
         return response.json()
