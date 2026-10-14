@@ -134,15 +134,18 @@ def Tools(access_token):
         return json.dumps(result)
 
 
+    
     @tool
     def get_member_payment_history(
         name: Optional[str] = None,
         phone: Optional[str] = None,
         member_id: Optional[str] = None,
+        start_date: Optional[str] = None,
+        end_date: Optional[str] = None,
     ):
         """
-        Retrieve payment history for a gym member using their name,
-        phone number, or member ID.
+        Retrieve payment history for a gym member, optionally filtered
+        by a payment date range.
 
         Use this tool to review previous payments or verify recorded
         payment transactions.
@@ -151,12 +154,15 @@ def Tools(access_token):
             name: Optional member name.
             phone: Optional member phone number.
             member_id: Optional unique member identifier.
+            start_date: Optional start date in YYYY-MM-DD format.
+            end_date: Optional end date in YYYY-MM-DD format.
 
         Returns:
             JSON-formatted payment history from the backend.
 
         Notes:
             - Use available identifying information to find the member.
+            - Use dates to restrict results to the requested period.
             - Do not claim a payment was made unless records confirm it.
             - Empty results do not prove that a member never paid.
             - This tool is read-only and does not modify payment records.
@@ -165,8 +171,11 @@ def Tools(access_token):
             name=name,
             phone=phone,
             member_id=member_id,
+            start_date=start_date,
+            end_date=end_date,
         )
         return json.dumps(response)
+
 
 
     return [
